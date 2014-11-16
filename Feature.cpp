@@ -28,24 +28,6 @@ long ExtractFeatures(const cv::Mat &img, std::vector<FEATURE2D> &feats)
 	{
 		bgrImgs[i].convertTo(fltImgs[i], CV_32FC1);
 	}
-
-	if (imgH.empty())
-	{
-		imgH = cv::Mat(img.size(), CV_32FC1);
-		cv::Mat imgG, imgB, imgH(img.size(), CV_32FC1);
-		imgG = 0.3f * fltImgs[2] + 0.04f * fltImgs[1] - 0.35f * fltImgs[0];
-		imgB = 0.34f * fltImgs[2] - 0.6f * fltImgs[1] + 0.17f * fltImgs[0];
-		for (long i = 0; i < img.size().area(); ++i)
-		{
-			float &fGVal = ((float*)imgG.data)[i];
-			float &fBVal = ((float*)imgB.data)[i];
-			((float*)imgH.data)[i] = std::atan2(fGVal, fBVal);
-		}
-		imgH *= (127.5 / (float)M_PI);
-		imgH += 128;
-		imgH.convertTo(imgH, CV_8UC1);
-	}
-
 	
 	std::vector<cv::KeyPoint> kps;
 	cv::Ptr<cv::KAZE> kaze = cv::KAZE::create(true, false, 0.02f);

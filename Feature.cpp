@@ -46,6 +46,7 @@ long ExtractFeatures(const cv::Mat &img, std::vector<FEATURE2D> &feats)
 		imgH.convertTo(imgH, CV_8UC1);
 	}
 
+	
 	std::vector<cv::KeyPoint> kps;
 	cv::Ptr<cv::KAZE> kaze = cv::KAZE::create(true, false, 0.02f);
 	kaze->detect(imgH, kps);

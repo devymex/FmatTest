@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Feature.h"
+#include "Match.h"
 #include "ImgView.h"
 #include "MainWnd.h"
 
@@ -37,13 +38,30 @@ int CMainWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_pImgView->Create(WS_CHILD | WS_BORDER, clientBox, this);
 	m_pImgView->SetFocus();
 
-	cv::Mat img = cv::imread("D:\\My Pictures\\hongkong\\IMG_4021.JPG");
-	m_pImgView->SetImg(img, CImgView::VM_FREE);
-	m_pImgView->SetView(1.0, cv::Point2d(0, 0));
-	m_pImgView->Refresh();
+	std::string strPath = "D:\\Documents\\ComVis\\expts\\floor\\";
 
-	IMGFEATS imgFeats;
-	BuildImgFeats(img, imgFeats);
+	cv::Mat img1 = cv::imread(strPath+ "IMG_4486.jpg");
+	cv::Mat img2 = cv::imread(strPath+ "IMG_4487.jpg");
+
+	IMGFEATS imgFeats1, imgFeats2;
+	BuildImgFeats(img1, imgFeats1);
+	BuildImgFeats(img2, imgFeats2);
+	SaveFeats(strPath + "IMG_4486.ft", imgFeats1);
+	SaveFeats(strPath + "IMG_4487.ft", imgFeats2);
+
+	LoadFeats(strPath + "IMG_4486.ft", imgFeats1);
+	LoadFeats(strPath + "IMG_4486.ft", imgFeats2);
+
+
+	std::vector<MATCH> matches;
+	MatchFeats(imgFeats1, imgFeats2, matches);
+	SaveMatches(strPath + "matches", matches);
+
+
+
+	//m_pImgView->SetImg(img, CImgView::VM_FREE);
+	//m_pImgView->SetView(1.0, cv::Point2d(0, 0));
+	//m_pImgView->Refresh();
 
 	return 0;
 }

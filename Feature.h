@@ -1,11 +1,16 @@
 
-const long SIFT_IMG_BORDER = 5;
-const long SIFT_DESC_LEN = (128 * 3);
 
 struct FEATURE2D
 {
+	typedef float _DT;
+	enum {
+		DESC_MONO_LEN = 128,
+		DESC_MONO_BYTES = (DESC_MONO_LEN * sizeof(_DT)),
+		DESC_LEN = (DESC_MONO_LEN * 3),
+		DESC_BYTE = (DESC_LEN * sizeof(_DT)),
+	};
 	cv::KeyPoint kp;
-	byte desc[SIFT_DESC_LEN];
+	_DT desc[DESC_LEN];
 };
 
 struct IMGFEATS

@@ -159,6 +159,7 @@
     <ClInclude Include="MainWnd.h" />
     <ClInclude Include="Match.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Feature.cpp" />

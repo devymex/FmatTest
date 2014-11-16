@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Util.h"
 #include "Feature.h"
 
 std::string GetTempTreeFileName()
@@ -11,10 +12,49 @@ std::string GetTempTreeFileName()
 
 long ExtractFeatures(const cv::Mat &img, std::vector<FEATURE2D> &feats)
 {
-	cv::Ptr<cv::ORB> orb = cv::ORB::create();
+	if (img.type() != CV_8UC3)
+	{
+		return 0;
+	}
+
+	std::vector<cv::Mat> bgrImgs(3);
+	cv::split(img, bgrImgs);
+
+	cv::Mat imgH;
+	cv::cvtColor(img, imgH, cv::COLOR_BGR2GRAY);
+
+	std::vector<cv::Mat> fltImgs(3);
+	for (long i = 0; i < 3; ++i)
+	{
+		bgrImgs[i].convertTo(fltImgs[i], CV_32FC1);
+	}
+
+	if (imgH.empty())
+	{
+		imgH = cv::Mat(img.size(), CV_32FC1);
+		cv::Mat imgG, imgB, imgH(img.size(), CV_32FC1);
+		imgG = 0.3f * fltImgs[2] + 0.04f * fltImgs[1] - 0.35f * fltImgs[0];
+		imgB = 0.34f * fltImgs[2] - 0.6f * fltImgs[1] + 0.17f * fltImgs[0];
+		for (long i = 0; i < img.size().area(); ++i)
+		{
+			float &fGVal = ((float*)imgG.data)[i];
+			float &fBVal = ((float*)imgB.data)[i];
+			((float*)imgH.data)[i] = std::atan2(fGVal, fBVal);
+		}
+		imgH *= (127.5 / (float)M_PI);
+		imgH += 128;
+		imgH.convertTo(imgH, CV_8UC1);
+	}
+
 	std::vector<cv::KeyPoint> kps;
-	cv::Mat matDesc;
-	orb->detectAndCompute(img, cv::noArray(), kps, matDesc);
+	cv::Ptr<cv::KAZE> kaze = cv::KAZE::create(true, false, 0.02f);
+	kaze->detect(imgH, kps);
+
+	std::vector<cv::Mat> matDesc(3);
+	for (long i = 0; i < 3; ++i)
+	{
+		kaze->compute(bgrImgs[i], kps, matDesc[i]);
+	}
 
 	feats.reserve(feats.size() + kps.size());
 	for (long i = 0; i < kps.size(); ++i)
@@ -22,18 +62,10 @@ long ExtractFeatures(const cv::Mat &img, std::vector<FEATURE2D> &feats)
 		feats.push_back(FEATURE2D());
 		FEATURE2D &lastFeat = feats.back();
 		lastFeat.kp = kps[i];
-		for (long j = 0; j < SIFT_DESC_LEN; ++j)
+		for (long j = 0; j < 3; ++j)
 		{
-			/*****************************************************************/
-			// ensure each elem of sift desc is limited with [0-255]
-			float test = matDesc.at<float>(i, j);
-			if (test > 255 || test < 0)
-			{
-				throw 0;
-			}
-			/*****************************************************************/
-
-			lastFeat.desc[j] = static_cast<byte>(matDesc.at<float>(i, j));
+			FEATURE2D::_DT *pDst = lastFeat.desc + j * FEATURE2D::DESC_MONO_LEN;
+			memcpy(pDst, matDesc[j].ptr<float>(i), FEATURE2D::DESC_MONO_BYTES);
 		}
 	}
 	return long(kps.size());
@@ -47,6 +79,8 @@ void BlockFeature(const cv::Mat &img, const cv::Size &blkSize,
 		(img.cols + blkSize.width - 1) / blkSize.width,
 		(img.rows + blkSize.height - 1) / blkSize.height);
 
+	int nBlkBorder = 1;
+
 	for (long r = 0; r < blkCnt.height; ++r)
 	{
 		for (long c = 0; c < blkCnt.height; ++c)
@@ -54,10 +88,10 @@ void BlockFeature(const cv::Mat &img, const cv::Size &blkSize,
 			cv::Range colRange, rowRange;
 
 			//inflate block for sift border
-			colRange.start = c * blkSize.width - SIFT_IMG_BORDER;
-			rowRange.start = r * blkSize.height - SIFT_IMG_BORDER;
-			colRange.end = (c + 1) * blkSize.width + SIFT_IMG_BORDER;
-			rowRange.end = (r + 1) * blkSize.height + SIFT_IMG_BORDER;
+			colRange.start = c * blkSize.width - nBlkBorder;
+			rowRange.start = r * blkSize.height - nBlkBorder;
+			colRange.end = (c + 1) * blkSize.width + nBlkBorder;
+			rowRange.end = (r + 1) * blkSize.height + nBlkBorder;
 
 			//
 			if (colRange.start < 0) colRange.start = 0;
@@ -80,14 +114,11 @@ void BlockFeature(const cv::Mat &img, const cv::Size &blkSize,
 
 void BuildDescMat(const std::vector<FEATURE2D> &feats, cv::Mat &matDesc)
 {
-	matDesc.release();
-	matDesc.create((long)feats.size(), SIFT_DESC_LEN, CV_32F);
+	
+	matDesc = cv::Mat((long)feats.size(), FEATURE2D::DESC_LEN, CV_32F);
 	for (long i = 0; i < (long)feats.size(); ++i)
 	{
-		for (long j = 0; j < SIFT_DESC_LEN; ++j)
-		{
-			matDesc.at<float>(i, j) = feats[i].desc[j];
-		}
+		memcpy(matDesc.ptr(i), feats[i].desc, FEATURE2D::DESC_BYTE);
 	}
 }
 
@@ -95,9 +126,7 @@ void BuildImgFeats(const cv::Mat &img, IMGFEATS &imgFeat)
 {
 	cv::Size blkSize(500, 500);
 	BlockFeature(img, blkSize, imgFeat.feats);
-
 	BuildDescMat(imgFeat.feats, imgFeat.desc);
-
 	imgFeat.tree.build(imgFeat.desc, cv::flann::KDTreeIndexParams());
 }
 
@@ -112,18 +141,21 @@ void SaveFeats(const std::string &strFile, const IMGFEATS &imgFeat)
 		outFile.write((char*)&i, sizeof(i));
 	}
 
-	if (imgFeat.desc.rows != nFeatCnt || imgFeat.desc.cols != SIFT_DESC_LEN)
+	if (imgFeat.desc.rows != nFeatCnt ||
+		imgFeat.desc.cols != FEATURE2D::DESC_LEN)
 	{
 		throw 0;
 	}
 
-	for (long i = 0; i < nFeatCnt; ++i)
+	cv::Size matSize = imgFeat.desc.size();
+	if (imgFeat.desc.isContinuous())
 	{
-		for (long j = 0; j < SIFT_DESC_LEN; ++j)
-		{
-			byte byVal = static_cast<byte>(imgFeat.desc.at<float>(i, j));
-			outFile.write((char*)&byVal, sizeof(byVal));
-		}
+		matSize.width *= matSize.height;
+		matSize.height = 1;
+	}
+	for (long i = 0; i < matSize.height; ++i)
+	{
+		outFile.write((char*)imgFeat.desc.ptr(i), FEATURE2D::DESC_BYTE);
 	}
 
 	//Write tree to a temp tree file
@@ -159,15 +191,10 @@ void LoadFeats(const std::string &strFile, IMGFEATS &imgFeat)
 		inFile.read((char*)&i, sizeof(i));
 	}
 
-	imgFeat.desc.create(nFeatCnt, SIFT_DESC_LEN, CV_32F);
+	imgFeat.desc = cv::Mat(nFeatCnt, FEATURE2D::DESC_LEN, CV_32F);
 	for (long i = 0; i < nFeatCnt; ++i)
 	{
-		for (long j = 0; j < SIFT_DESC_LEN; ++j)
-		{
-			byte byVal;
-			inFile.read((char*)&byVal, sizeof(byVal));
-			imgFeat.desc.at<float>(i, j) = byVal;
-		}
+		inFile.read((char*)imgFeat.desc.ptr(i), FEATURE2D::DESC_BYTE);
 	}
 
 	long nFileSize;

@@ -4,14 +4,17 @@
 #define VC_EXTRALEAN
 #endif
 
-// Set Win32 SDK version
-#include <SDKDDKVer.h>
-
 // some CString constructors will be explicit
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS
 
 // turns off MFC's hiding of some common and often safely ignored warning messages
 #define _AFX_ALL_WARNINGS
+
+// use M_PI, etc.
+#define _USE_MATH_DEFINES
+
+// Set Win32 SDK version
+#include <SDKDDKVer.h>
 
 // MFC core and standard components
 #include <afxwin.h>
@@ -52,6 +55,5 @@
 #include <thread>
 #include <vector>
 
-#define _USE_MATH_DEFINES
 #include <cassert>
 #include <cmath>

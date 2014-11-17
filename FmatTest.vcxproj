@@ -153,6 +153,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Feature.h" />
+    <ClInclude Include="FMat.h" />
     <ClInclude Include="ImgBuf.h" />
     <ClInclude Include="ImgView.h" />
     <ClInclude Include="MainApp.h" />
@@ -163,6 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Feature.cpp" />
+    <ClCompile Include="FMat.cpp" />
     <ClCompile Include="ImgBuf.cpp" />
     <ClCompile Include="ImgView.cpp" />
     <ClCompile Include="MainApp.cpp" />

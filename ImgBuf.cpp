@@ -102,15 +102,19 @@ void CImgBuf::UpdateBufBox()
 	scrSizeSrc.width = ::GetSystemMetrics(SM_CXSCREEN) / m_dScale;
 	scrSizeSrc.height = ::GetSystemMetrics(SM_CYSCREEN) / m_dScale;
 
-	m_BufBox.x = (int)std::floor(m_SrcBox.x - scrSizeSrc.width);
-	m_BufBox.y = (int)std::floor(m_SrcBox.y - scrSizeSrc.height);
-	m_BufBox.width = (int)std::ceil(m_SrcBox.width + scrSizeSrc.width * 2.0);
-	m_BufBox.height = (int)std::ceil(m_SrcBox.height + scrSizeSrc.height * 2.0);
+	m_BufBox.x = (int)(m_SrcBox.x - scrSizeSrc.width);
+	m_BufBox.y = (int)(m_SrcBox.y - scrSizeSrc.height);
+	float fMaxX = m_BufBox.x + (float)m_SrcBox.width +
+		(float)scrSizeSrc.width * 2.0f;
+	float fMaxY = m_BufBox.y + (float)m_SrcBox.height +
+		(float)scrSizeSrc.height * 2.0f;
 
 	LimitMin(m_BufBox.x, 0);
 	LimitMin(m_BufBox.y, 0);
-	LimitMax(m_BufBox.width, m_OrgImg.cols - m_BufBox.x);
-	LimitMax(m_BufBox.height, m_OrgImg.rows - m_BufBox.y);
+	LimitMax(fMaxX, (float)m_OrgImg.cols);
+	LimitMax(fMaxY, (float)m_OrgImg.rows);
+	m_BufBox.width = (int)(fMaxX - m_BufBox.x);
+	m_BufBox.height = (int)(fMaxY - m_BufBox.y);
 
 	if (m_BufBox.area() == 0)
 	{

@@ -86,3 +86,38 @@ void LoadMatches(const std::string &strFile, std::vector<MATCH> &matches)
 		inFile.read((char*)&i, sizeof(i));
 	}
 }
+
+
+void DrawMatches(const cv::Mat &img1, const cv::Mat &img2,
+				 const std::vector<MATCH> &matches, cv::Mat &imgOut)
+{
+	long nCols = img1.cols;
+	long nRows = img1.rows;
+	cv::Mat imgComb = cv::Mat::zeros(nRows, nCols * 2, img1.type());
+	img1.copyTo(imgComb.colRange(0, nCols));
+	img2.copyTo(imgComb.colRange(nCols, nCols * 2));
+	if (imgOut.size != imgComb.size || imgOut.type() != imgComb.type())
+	{
+		imgOut = imgComb.clone();
+	}
+
+	for (long i = 0; i < (long)matches.size(); ++i)
+	{
+		const MATCH &curMatch = matches[i];
+		cv::Point pt1 = curMatch.pt1;
+		cv::Point pt2 = curMatch.pt2;
+		pt2.x += nCols;
+		cv::Scalar clr;
+		if (matches.size() == 1)
+		{
+			clr = cv::Scalar(0, 0, 255);
+		}
+		else
+		{
+			clr = cv::Scalar(rand() % 255, rand() % 255, rand() % 255, 0);
+		}
+		cv::circle(imgOut, pt1, 5, clr, 2);
+		cv::circle(imgOut, pt2, 5, clr, 2);
+		cv::line(imgOut, pt1, pt2, clr, 2);
+	}
+}

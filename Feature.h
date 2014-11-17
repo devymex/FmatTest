@@ -20,7 +20,8 @@ struct IMGFEATS
 	cv::flann::Index tree;
 };
 
-long ExtractFeatures(const cv::Mat &img, std::vector<FEATURE2D> &feats);
+long ExtractFeatures(const cv::Mat &img, long nMaxKpNum,
+					 std::vector<FEATURE2D> &feats);
 
 void BlockFeature(const cv::Mat &img, const cv::Size &blkSize,
 				  std::vector<FEATURE2D> &feats);

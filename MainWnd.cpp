@@ -43,19 +43,24 @@ int CMainWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	cv::Mat img1 = cv::imread(strPath+ "IMG_4486.jpg");
 	cv::Mat img2 = cv::imread(strPath+ "IMG_4487.jpg");
 
+	sizeof(FEATURE2D);
 	IMGFEATS imgFeats1, imgFeats2;
-	BuildImgFeats(img1, imgFeats1);
-	BuildImgFeats(img2, imgFeats2);
-	SaveFeats(strPath + "IMG_4486.ft", imgFeats1);
-	SaveFeats(strPath + "IMG_4487.ft", imgFeats2);
+	//BuildImgFeats(img1, imgFeats1);
+	//BuildImgFeats(img2, imgFeats2);
+	//SaveFeats(strPath + "IMG_4486.ft", imgFeats1);
+	//SaveFeats(strPath + "IMG_4487.ft", imgFeats2);
 
 	LoadFeats(strPath + "IMG_4486.ft", imgFeats1);
-	LoadFeats(strPath + "IMG_4486.ft", imgFeats2);
-
+	LoadFeats(strPath + "IMG_4487.ft", imgFeats2);
 
 	std::vector<MATCH> matches;
-	MatchFeats(imgFeats1, imgFeats2, matches);
-	SaveMatches(strPath + "matches", matches);
+	//MatchFeats(imgFeats1, imgFeats2, matches);
+	//SaveMatches(strPath + "matches", matches);
+	LoadMatches(strPath + "matches", matches);
+
+	//cv::Mat imgOut;
+	//DrawMatches(img1, img2, matches, imgOut);
+	//cv::imwrite(strPath + "out.jpg", imgOut);
 
 
 
